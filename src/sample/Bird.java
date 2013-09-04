@@ -19,7 +19,7 @@ public class Bird extends Circle{
     private double dir;
 
     private final int radius;
-    private final int turnRadius = 2;
+    private final int turnRadius = 5;
     private List<Bird> otherBirds;
 
     public Bird(int radius){
@@ -29,11 +29,39 @@ public class Bird extends Circle{
     }
 
     public void update(){
-        averagePosition();
-        moveInDir(dir);
+//        double cohDir = applyCohesion();
+        double sepDir = applySeparation();
+//        dir = steerTowards(cohDir);
+        moveInDir(sepDir);
 
         setLayoutX(x);
         setLayoutY(y);
+    }
+
+    private double applySeparation() {
+        double totalDir = 0;
+        int birdsInRange = 0;
+        for(Bird b : otherBirds){
+            if(inRange(b)){
+                totalDir += calcAngleToPos(b.x,b.y) - 180;
+                birdsInRange++;
+            }
+        }
+        if(birdsInRange != 0){
+            return totalDir / birdsInRange;
+        }
+        return dir;
+    }
+
+    private double steerTowards(double dir) {
+        if(Math.abs(dir - this.dir) < turnRadius){
+            return dir;
+        }
+        if(dir > this.dir){
+            return this.dir + turnRadius;
+        }else{
+            return this.dir - turnRadius;
+        }
     }
 
     private void moveInDir(double angle) {
@@ -41,7 +69,7 @@ public class Bird extends Circle{
         y += (speed * -Math.sin(Math.toRadians(angle - 90)));
     }
 
-    private void averagePosition() {
+    private double applyCohesion() {
         double totalX = 0;
         double totalY = 0;
         int birdsInRange = 0;
@@ -55,16 +83,15 @@ public class Bird extends Circle{
         if(birdsInRange != 0){
             double avgX = totalX / birdsInRange;
             double avgY = totalY / birdsInRange;
-            dir = calcAngleToPos(avgX,avgY);
+            return calcAngleToPos(avgX,avgY);
         }
+        return dir;
     }
 
     private double calcAngleToPos(double newX, double newY) {
         double dx = newX - x;
         double dy = newY - y;
-        double angle = Math.atan2(dx, dy) * 180 / Math.PI;
-        System.out.println(angle);
-        return angle;
+        return Math.atan2(dx, dy) * 180 / Math.PI;
     }
 
     private boolean inRange(Bird b){
